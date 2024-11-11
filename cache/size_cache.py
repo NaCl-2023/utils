@@ -6,6 +6,7 @@
 import collections
 import functools
 import sys
+from hashlib import md5
 
 DEFAULT_MAX_ONE_SIZE = 1024 * 1024 * 5  # 当条数据最大缓存，5M
 DEFAULT_MAX_SUM_SIZE = 1024 * 1024 * 50  # 全部数据最大缓存，50M
@@ -26,29 +27,28 @@ class SizeCache:
         def decorator(func):  # 多套一层以传参
             @functools.wraps(func)  # 将被装饰器覆盖的名字还原回来
             def wrapper(*args, **kwargs):
-                _cache = self._get_data(func, args)
+                _cache = self._get_data(func, args, kwargs)
                 if _cache:
                     return _cache
                 result = func(*args, **kwargs)
-                self._set_data(result, func, args)
+                self._set_data(result, func, args, kwargs)
                 return result
 
             return wrapper
 
         return decorator
 
-    def _get_data(self, func, args):
-        name = self._get_name(func, args)
+    def _get_data(self, func, args, kwargs):
+        name = self._get_name(func, args, kwargs)
         if name not in self.cache:
             return
         _cache: CacheData = self.cache[name]
         return _cache.data
 
-    def _set_data(self, data, func, args):
+    def _set_data(self, data, func, args, kwargs):
         # 新增或覆盖数据
-        name = self._get_name(func, args)
+        name = self._get_name(func, args, kwargs)
         _cache = CacheData(data)
-        print(name, self._size, DEFAULT_MAX_ONE_SIZE, DEFAULT_MAX_SUM_SIZE)
         if _cache.size > DEFAULT_MAX_ONE_SIZE:
             return
         if self._size > DEFAULT_MAX_SUM_SIZE:
@@ -63,17 +63,17 @@ class SizeCache:
                     break
 
             # 开始删除
-            print(f'max size, del {list(self.cache.keys())[:end_index]}')
             for key in list(self.cache.keys())[:end_index]:
                 self.cache.pop(key)
-            # self.cache = self.cache[end_index:]
 
         self.cache[name] = CacheData(data)
 
     @staticmethod
-    def _get_name(func, args):
-        # 函数名和参数共同组成为索引名
-        return func.__name__, tuple(args)
+    def _get_name(func, args, kwargs):
+        # 函数名和参数共同组成为索引名，参数str化并转成md5
+        m = md5()
+        m.update((str(args)+str(kwargs)).encode('utf-8'))
+        return func.__name__, m.hexdigest()
 
     @property
     def _size(self):
@@ -94,3 +94,6 @@ class CacheData:
 
     def __repr__(self):
         return self.__str__()
+
+
+cache = SizeCache()
