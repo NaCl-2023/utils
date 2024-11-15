@@ -1,7 +1,7 @@
 # File       : log_decorator.py
 # Time       ：2024/9/26 12:21
-# Author     ：junxian.guo
-# version    ：python 3.8
+# Author     ：nacl
+# version    ：python 3.12
 # Description：日志装饰器
 import functools
 import logging

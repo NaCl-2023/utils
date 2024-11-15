@@ -1,7 +1,7 @@
 # File       : list_utils.py
 # Time       ：2024/9/30 16:20
-# Author     ：junxian.guo
-# version    ：python 3.8
+# Author     ：nacl
+# version    ：python 3.12
 # Description：数组相关工具类
 
 def list_to_log(_list):

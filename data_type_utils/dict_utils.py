@@ -1,7 +1,7 @@
 # File       : dict_utils.py
 # Time       ：2024/9/30 16:19
-# Author     ：junxian.guo
-# version    ：python 3.8
+# Author     ：nacl
+# version    ：python 3.12
 # Description：字典相关工具类
 import copy
 
