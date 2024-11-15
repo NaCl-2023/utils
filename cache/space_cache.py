@@ -42,7 +42,6 @@ class SpaceCache(BaseCache):
         return self.cache[name].data
 
     def _set_data(self, data, func, args, kwargs):
-        # 新增或覆盖数据
         name = self._get_name(func, args, kwargs)
         _cache = Data(data)
         if _cache.size > DEFAULT_MAX_ONE_SIZE:  # 超过单条数据最大缓存，不缓存

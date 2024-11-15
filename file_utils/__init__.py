@@ -12,22 +12,35 @@ import traceback
 from configparser import ConfigParser
 
 
-def convert_url(url: str):
-    # 转换路径中不统一的字符
-    return url.replace('\\\\', '/').replace('//', '/').replace('\\', '/')
+def convert_path(path: str):
+    """
+    转换路径中不统一的字符
+    @param path:
+    @return:
+    """
+    return os.path.normpath(path).replace('\\', '/')
 
 
-def read_ini(url: str):
-    # 读取ini文件
-    if not os.path.exists(url):
-        raise FileNotFoundError(url)
+def read_ini(path: str):
+    """
+    读取ini文件
+    @param path:
+    @return:
+    """
+    if not os.path.exists(path):
+        raise FileNotFoundError(path)
     conf = ConfigParser()
-    conf.read(url, encoding='utf-8')
+    conf.read(path, encoding='utf-8')
     return conf
 
 
 def get_file_for_code(file, code):
-    # 以特定的编码格式读取文件
+    """
+    以特定的编码格式读取文件
+    @param file:
+    @param code:
+    @return:
+    """
     if not os.path.exists(file):
         return 'File not generated or file not found.'
     with open(file, 'r', encoding=code, errors='ignore') as f:  # 忽略编码问题
@@ -43,35 +56,59 @@ def get_file_for_code(file, code):
     return content
 
 
-def read_file_for_line(url):
-    # 逐行读文件
+def read_file_for_line(path):
+    """
+    逐行读文件
+    @param path:
+    @return:
+    """
     lines = []
-    with open(url, 'r') as f:
+    with open(path, 'r') as f:
         for line in f:
             lines.append(line)
     return lines
 
 
-def open_json(url):
-    # 打开json文件
-    if not os.path.exists(url):
-        raise FileNotFoundError(url)
-    with open(url, 'r', encoding="utf-8") as f:
-        content = json.load(f)
-    return content
+def open_json(path, encoding='utf-8'):
+    """
+    打开json文件
+    @param path:
+    @param encoding:
+    @return:
+    """
+    if not os.path.exists(path):
+        raise FileNotFoundError(path)
+    try:
+        with open(path, 'r', encoding=encoding) as f:
+            return json.load(f)
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Failed to decode JSON from {path}: {e}")
 
 
-def open_json_order(url):
-    # 打开json文件
-    if not os.path.exists(url):
-        raise FileNotFoundError(url)
-    with open(url, 'r', encoding="utf-8") as f:
-        content = f.read()
-    return json.loads(content, object_pairs_hook=collections.OrderedDict)
+def open_json_back_order(path, encoding='utf-8'):
+    """
+    打开json文件，返回有序字典collections.OrderedDict
+    @param path:
+    @param encoding:
+    @return:
+    """
+    if not os.path.exists(path):
+        raise FileNotFoundError(path)
+    try:
+        with open(path, 'r', encoding=encoding) as f:
+            return json.load(f, object_pairs_hook=lambda pairs: collections.OrderedDict(pairs))
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Failed to decode JSON from {path}: {e}")
 
 
 def save_json(url, value, indent=0):
-    # 保存json文件
+    """
+    保存json文件
+    @param url:
+    @param value:
+    @param indent: 空格
+    @return:
+    """
     url = os.path.abspath(url)
     if not os.path.exists(url):
         raise FileNotFoundError(url)
@@ -80,32 +117,38 @@ def save_json(url, value, indent=0):
     return True
 
 
-def get_all_file_for_dir(target_dir, file_type=None, is_abspath=False):
-    # 获取目录下全部文件
+def get_all_file_for_dir(target_dir, type_filter: list=None, is_abspath=False):
+    """
+    获取目录下全部文件
+    @param target_dir:
+    @param type_filter: 类型过滤
+    @param is_abspath:
+    @return:
+    """
     if not os.path.exists(target_dir):
         raise FileNotFoundError(target_dir)
-    files = []
-    for path, dirs, _files in os.walk(target_dir):
-        for _file in _files:
-            suffix = os.path.splitext(_file)[-1].lstrip('.')  # 后缀
-            if file_type and suffix not in file_type:
+    if type_filter is None:
+        type_filter = []
+    elif not isinstance(type_filter, list):
+        type_filter = [type_filter]
+
+    target_files = []
+    for root, _, files in os.walk(target_dir):
+        for file in files:
+            suffix = os.path.splitext(file)[-1].lstrip('.').lower()  # 后缀
+            if type_filter and suffix not in type_filter:
                 continue
-            url = os.path.join(path, _file)
-            files.append(url if not is_abspath else os.path.abspath(url))
-    return files
-
-
-def get_all_execl_for_dir(*args, **kwargs):
-    # 获取目录下表格文件
-    suffixes = ['xlsx', 'xlsm', 'xltx', 'xls']  # 常见表格文件后缀
-    cache_prefix = '~$'  # 临时表格文件的前缀
-    kwargs['file_type'] = suffixes
-    res = get_all_file_for_dir(*args, **kwargs)
-    return [file for file in res if not os.path.basename(file).startswith(cache_prefix)]
+            target_files.append(file if not is_abspath else os.path.abspath(os.path.join(root, file)))
+    return target_files
 
 
 def save_file(url, value):
-    # 保存文件
+    """
+    保存文件
+    @param url:
+    @param value:
+    @return:
+    """
     with open(url, 'w', encoding='utf-8') as f:
         f.write(value)
 
@@ -134,7 +177,11 @@ def clear_excess_file(files_dir, startswith, max_count, min_count):
 
 
 def filter_file(paths):
-    # 过滤路径中的非文件路径
+    """
+    过滤路径中的非文件路径
+    @param paths:
+    @return:
+    """
     new_paths = []
     for path in paths:
         if os.path.isfile(path):

@@ -8,16 +8,11 @@ import copy
 
 def deep_get(d, keys, default=None):
     """
-    Get values in dictionary safely. 从多重嵌套字典中拿值
-    https://stackoverflow.com/questions/25833613/safe-method-to-get-value-of-nested-dictionary
-
-    Args:
-        d (dict):
-        keys (str, list): Such as `Scheduler.NextRun.value`
-        default: Default return if key not found.
-
-    Returns:
-
+    从多重嵌套字典中拿值
+    @param d: 字典
+    @param keys:
+    @param default:
+    @return:
     """
     if isinstance(keys, str):
         keys = keys.split('.')
@@ -31,7 +26,11 @@ def deep_get(d, keys, default=None):
 
 def deep_set(d, keys, value):
     """
-    Set value into dictionary safely, imitating deep_get(). 给多重嵌套字典赋值
+    给多重嵌套字典赋值
+    @param d:
+    @param keys:
+    @param value:
+    @return:
     """
     if isinstance(keys, str):
         keys = keys.split('.')

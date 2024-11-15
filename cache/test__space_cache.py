@@ -6,7 +6,7 @@
 from dataclasses import dataclass
 from unittest import TestCase
 
-import time
+import time_utils
 from space_cache import space_cache, DEFAULT_MAX_ONE_SIZE
 
 
@@ -25,7 +25,7 @@ def test_size(size, key = None):
 
 @space_cache.func
 def test_get():
-    time.sleep(1)
+    time_utils.sleep(1)
     return Test(1)
 
 
@@ -35,13 +35,13 @@ class TestCache(TestCase):
         测试空间缓存是否有效
         @return:
         """
-        start_time = time.time()
+        start_time = time_utils.time()
         test_get()
-        one_time = time.time() - start_time
-        start_time2 = time.time()
+        one_time = time_utils.time() - start_time
+        start_time2 = time_utils.time()
         test_get()
-        print(time.time() - start_time2, one_time)
-        self.assertLess(time.time() - start_time2, one_time, 'check get fail')
+        print(time_utils.time() - start_time2, one_time)
+        self.assertLess(time_utils.time() - start_time2, one_time, 'check get fail')
 
     def test_check_sum_max(self):
         space_cache.clear()
