@@ -4,8 +4,8 @@
 # version    ：python 3.12
 # Description：时间缓存
 import functools
+import time
 
-import time_utils
 from . import BaseCache, BaseData
 
 DEFAULT_TIMEOUT = 300  # 默认过期时间
@@ -51,7 +51,7 @@ class CacheData(BaseData):
     def __init__(self, data, timeout: int):
         super().__init__(data)
         self.timeout = timeout
-        self.save_time = int(time_utils.time())
+        self.save_time = int(time.time())
         self.check_timeout()  # 校验超时时间
 
     def check_timeout(self):
@@ -64,7 +64,7 @@ class CacheData(BaseData):
 
     @property
     def is_timeout(self):
-        return (self.save_time + self.timeout) < time_utils.time()
+        return (self.save_time + self.timeout) < time.time()
 
 
 time_cache = TimeCache()
