@@ -8,7 +8,7 @@ import copy
 import functools
 import sys
 
-from cache import BaseData, BaseCache
+from . import BaseData, BaseCache
 
 DEFAULT_MAX_ONE_SIZE = 1024 * 1024 * 5  # 当条数据最大缓存，5M
 DEFAULT_MAX_SUM_SIZE = 1024 * 1024 * 50  # 全部数据最大缓存，50M
