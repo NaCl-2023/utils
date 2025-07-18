@@ -19,11 +19,18 @@ class SpaceCache(BaseCache):
     空间缓存
     计算大小的函数为sys.getsizeof浅计算，不会统计下层对象的大小，需要对象有__sizeof__方法。
     """
+
     def __init__(self):
         super().__init__()
         self.cache: {(str, tuple): Data} = collections.OrderedDict()
 
     def func(self, func):
+        """
+        函数装饰器，用于缓存函数的返回结果
+        :param func:
+        :return:
+        """
+
         @functools.wraps(func)  # 将被装饰器覆盖的名字还原回来
         def wrapper(*args, **kwargs):
             _cache = self._get_data(func, args, kwargs)
@@ -35,6 +42,40 @@ class SpaceCache(BaseCache):
 
         return wrapper
 
+    def cls(self, cls):
+        """
+        类装饰器，用于缓存类的实例化结果
+        :param cls:
+        :return:
+        """
+
+        @functools.wraps(cls)
+        def wrapper(*args, **kwargs):
+            _cache = self._get_data(cls, args, kwargs)
+            if _cache:
+                return _cache
+            result = cls(*args, **kwargs)
+            self._set_data(result, cls, args, kwargs)
+            return result
+
+        class CachedClass(cls):
+            def __new__(cls, *args, **kwargs):
+                return wrapper(*args, **kwargs)
+
+        CachedClass.__name__ = cls.__name__
+        CachedClass.__doc__ = cls.__doc__
+        CachedClass.__module__ = cls.__module__
+        CachedClass.__qualname__ = cls.__qualname__
+
+        # 将原始类的属性和方法复制到新类中
+        for attr_name in dir(cls):
+            if not attr_name.startswith('__'):
+                attr = getattr(cls, attr_name)
+                if callable(attr):
+                    setattr(CachedClass, attr_name, attr)
+
+        return CachedClass
+
     def _get_data(self, func, args, kwargs):
         name = self._get_name(func, args, kwargs)
         if name not in self.cache:
@@ -42,6 +83,7 @@ class SpaceCache(BaseCache):
         return self.cache[name].data
 
     def _set_data(self, data, func, args, kwargs):
+        # 新增或覆盖数据
         name = self._get_name(func, args, kwargs)
         _cache = Data(data)
         if _cache.size > DEFAULT_MAX_ONE_SIZE:  # 超过单条数据最大缓存，不缓存
@@ -57,7 +99,7 @@ class SpaceCache(BaseCache):
                     end_index = index
                     break
             # 开始删除
-            [self.cache.pop(key) for key in list(self.cache.keys())[:end_index+1]]
+            [self.cache.pop(key) for key in list(self.cache.keys())[:end_index + 1]]
         self.cache[name] = Data(data)
 
     @property

@@ -16,6 +16,13 @@ class BaseCache:
         """
         pass
 
+    def cls(self, *args, **kwargs):
+        """
+        类缓存装饰器
+        @return:
+        """
+        pass
+
     def _get_data(self, *args, **kwargs):
         pass
 

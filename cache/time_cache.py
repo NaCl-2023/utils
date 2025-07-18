@@ -19,6 +19,7 @@ class TimeCache(BaseCache):
         @param timeout: 超时时间
         @return:
         """
+
         def decorator(func):  # 多套一层以传参
             @functools.wraps(func)  # 将被装饰器覆盖的名字还原回来
             def wrapper(*args, **kwargs):
@@ -32,6 +33,41 @@ class TimeCache(BaseCache):
             return wrapper
 
         return decorator
+
+    def cls(self, cls, timeout=DEFAULT_TIMEOUT):
+        """
+        类装饰器，用于缓存类的实例化结果
+        @param cls:
+        @param timeout: 超时时间
+        :return:
+        """
+
+        @functools.wraps(cls)
+        def wrapper(*args, **kwargs):
+            _cache = self._get_data(cls, args, kwargs)
+            if _cache:
+                return _cache
+            result = cls(*args, **kwargs)
+            self._set_data(result, cls, args, kwargs, timeout)
+            return result
+
+        class CachedClass(cls):
+            def __new__(cls, *args, **kwargs):
+                return wrapper(*args, **kwargs)
+
+        CachedClass.__name__ = cls.__name__
+        CachedClass.__doc__ = cls.__doc__
+        CachedClass.__module__ = cls.__module__
+        CachedClass.__qualname__ = cls.__qualname__
+
+        # 将原始类的属性和方法复制到新类中
+        for attr_name in dir(cls):
+            if not attr_name.startswith('__'):
+                attr = getattr(cls, attr_name)
+                if callable(attr):
+                    setattr(CachedClass, attr_name, attr)
+
+        return CachedClass
 
     def _get_data(self, func, args, kwargs):
         name = self._get_name(func, args, kwargs)
